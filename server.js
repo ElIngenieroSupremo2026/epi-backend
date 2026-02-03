@@ -12,12 +12,16 @@ const client = new MongoClient(uri);
 app.post("/register", async (req, res) => {
   try {
     const student = {
-      name: req.body.name,
-      phone: req.body.phone,
-      age: req.body.age,
-      paymentType: req.body.paymentType,
+      name: String(req.body.name || "").trim(),
+      phone: String(req.body.phone || "").trim(),
+      age: Number(req.body.age),
+      paymentType: String(req.body.paymentType || "").trim(),
       createdAt: new Date()
     };
+
+    if (!student.name || !student.phone || !student.paymentType || isNaN(student.age)) {
+      return res.status(400).json({ message: "❌ Datos inválidos" });
+    }
 
     await client.connect();
     const db = client.db("EPI_DATA");
@@ -27,8 +31,8 @@ app.post("/register", async (req, res) => {
 
     res.json({ message: "✅ Alumno registrado correctamente" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "❌ Error al guardar" });
+    console.error("🔥 ERROR:", err);
+    res.status(500).json({ message: err.message || "❌ Error al guardar" });
   }
 });
 
