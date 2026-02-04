@@ -1,5 +1,5 @@
 import express from "express";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import cors from "cors";
 
 const app = express();
@@ -15,7 +15,7 @@ async function getCollection() {
   return db.collection("student registration");
 }
 
-// ✅ REGISTRAR ALUMNO
+// 🔹 REGISTRAR ALUMNO
 app.post("/register", async (req, res) => {
   try {
     const student = {
@@ -31,24 +31,34 @@ app.post("/register", async (req, res) => {
 
     res.json({ message: "✅ Alumno registrado correctamente" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "❌ Error al guardar" });
   }
 });
 
-// ✅ OBTENER TODOS LOS ALUMNOS
+// 🔹 OBTENER ALUMNOS
 app.get("/students", async (req, res) => {
   try {
     const collection = await getCollection();
     const students = await collection
       .find({})
-      .sort({ createdAt: -1 }) // más recientes primero
+      .sort({ createdAt: -1 })
       .toArray();
 
     res.json(students);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "❌ Error al obtener registros" });
+  }
+});
+
+// 🔥 BORRAR ALUMNO (OPERACIÓN CLASIFICADA)
+app.delete("/students/:id", async (req, res) => {
+  try {
+    const collection = await getCollection();
+    await collection.deleteOne({ _id: new ObjectId(req.params.id) });
+
+    res.json({ message: "🗑️ Alumno eliminado" });
+  } catch (err) {
+    res.status(500).json({ message: "❌ Error al eliminar" });
   }
 });
 
