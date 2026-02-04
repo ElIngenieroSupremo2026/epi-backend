@@ -9,30 +9,46 @@ app.use(express.json());
 const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri);
 
+async function getCollection() {
+  await client.connect();
+  const db = client.db("EPI_DATA");
+  return db.collection("student registration");
+}
+
+// ✅ REGISTRAR ALUMNO
 app.post("/register", async (req, res) => {
   try {
     const student = {
-      name: String(req.body.name || "").trim(),
-      phone: String(req.body.phone || "").trim(),
-      age: Number(req.body.age),
-      paymentType: String(req.body.paymentType || "").trim(),
+      name: req.body.name,
+      phone: req.body.phone,
+      age: req.body.age,
+      paymentType: req.body.paymentType,
       createdAt: new Date()
     };
 
-    if (!student.name || !student.phone || !student.paymentType || isNaN(student.age)) {
-      return res.status(400).json({ message: "❌ Datos inválidos" });
-    }
-
-    await client.connect();
-    const db = client.db("EPI_DATA");
-    const collection = db.collection("student registration");
-
+    const collection = await getCollection();
     await collection.insertOne(student);
 
     res.json({ message: "✅ Alumno registrado correctamente" });
   } catch (err) {
-    console.error("🔥 ERROR:", err);
-    res.status(500).json({ message: err.message || "❌ Error al guardar" });
+    console.error(err);
+    res.status(500).json({ message: "❌ Error al guardar" });
+  }
+});
+
+// ✅ OBTENER TODOS LOS ALUMNOS
+app.get("/students", async (req, res) => {
+  try {
+    const collection = await getCollection();
+    const students = await collection
+      .find({})
+      .sort({ createdAt: -1 }) // más recientes primero
+      .toArray();
+
+    res.json(students);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "❌ Error al obtener registros" });
   }
 });
 
